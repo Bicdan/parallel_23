@@ -5,17 +5,8 @@
 Handler::Handler(int M, int N) : M(M), N(N) {
     y_step = 4. / M;
     x_step = 3. / N;
-    eps = std::max(x_step, y_step);
-    eps *= eps;
+    eps = std::max(x_step, y_step) * std::max(x_step, y_step);
     init();
-}
-
-double Handler::clip_x(double x) {
-    return std::max(0., std::min(3., x));
-}
-
-double Handler::clip_y(double y) {
-    return std::max(0., std::min(4., y));
 }
 
 double Handler::calculate_a(double y1, double y2, double x) {
@@ -31,13 +22,6 @@ double Handler::calculate_a(double y1, double y2, double x) {
     }
 }
 
-double Handler::get_a(int i, int j) {
-    double y1 = clip_y(y_step * (i - 0.5));
-    double y2 = clip_y(y_step * (i + 0.5));
-    double x = clip_x(x_step * (j - 0.5));
-    return calculate_a(y1, y2, x);
-}
-
 double Handler::calculate_b(double y, double x1, double x2) {
     if (x1 > -3*y/4 + 3) {
         return 1 / eps;
@@ -51,14 +35,7 @@ double Handler::calculate_b(double y, double x1, double x2) {
     }
 }
 
-double Handler::get_b(int i, int j) {
-    double x1 = clip_x(x_step * (j - 0.5));
-    double x2 = clip_x(x_step * (j + 0.5));
-    double y = clip_y(y_step * (i - 0.5));
-    return calculate_b(y, x1, x2);
-}
-
-double Handler::get_square(double x1, double x2, double y1, double y2) {
+double Handler::calculate_intersection_area(double x1, double x2, double y1, double y2) {
     if (3*y1 + 4*x1 > 12) {
         return 0;
     } else if (3*y2 + 4*x2 < 12) {
@@ -90,8 +67,15 @@ void Handler::init() {
     #pragma omp parallel for
     for (int i = 0; i < M + 1; ++i) {
         for (int j = 0; j < N + 1; ++j) {
-            _a[i][j] = get_a(i, j);
-            _b[i][j] = get_b(i, j);
+            double y1 = y_step * (i - 0.5);
+            double y2 = y_step * (i + 0.5);
+            double x = x_step * (j - 0.5);
+            _a[i][j] = calculate_a(y1, y2, x);
+
+            double x1 = x_step * (j - 0.5);
+            double x2 = x_step * (j + 0.5);
+            double y = y_step * (i - 0.5);
+            _b[i][j] = calculate_b(y, x1, x2);
         }
     }
 
@@ -100,11 +84,11 @@ void Handler::init() {
     #pragma omp parallel for
     for (int i = 0; i < M + 1; ++i) {
         for (int j = 0; j < N + 1; ++j) {
-            double x1 = clip_x(x_step * (j - 1. / 2));
-            double x2 = clip_x(x_step * (j + 1. / 2));
-            double y1 = clip_y(y_step * (i - 1. / 2));
-            double y2 = clip_y(y_step * (i + 1. / 2));
-            _B[i][j] = get_square(x1, x2, y1, y2) / x_step / y_step;
+            double x1 = x_step * (j - 0.5);
+            double x2 = x_step * (j + 0.5);
+            double y1 = y_step * (i - 0.5);
+            double y2 = y_step * (i + 0.5);
+            _B[i][j] = calculate_intersection_area(x1, x2, y1, y2) / x_step / y_step;
         }
     }
 }
