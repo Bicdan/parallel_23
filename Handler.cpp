@@ -3,9 +3,9 @@
 #include <iostream>
 
 Handler::Handler(int M, int N) : M(M), N(N) {
-    y_step = 4. / M;
-    x_step = 3. / N;
-    eps = std::max(x_step, y_step) * std::max(x_step, y_step);
+    h1 = 3. / N;
+    h2 = 4. / M;
+    eps = std::max(h1, h2) * std::max(h1, h2);
     init();
 }
 
@@ -18,7 +18,7 @@ double Handler::calculate_a(double y1, double y2, double x) {
     } else {
         double y = -4*x / 3 + 4;
         double l = y - y1;
-        return l / y_step+ (1 - l / y_step) / eps;
+        return l / h2 + (1 - l / h2) / eps;
     }
 }
 
@@ -31,7 +31,7 @@ double Handler::calculate_b(double y, double x1, double x2) {
     } else {
         double x = -3*y / 4 + 3;
         double l = x - x1;
-        return l / y_step+ (1 - l / y_step) / eps;
+        return l / h1 + (1 - l / h1) / eps;
     }
 }
 
@@ -67,14 +67,14 @@ void Handler::init() {
     #pragma omp parallel for
     for (int i = 0; i < M + 1; ++i) {
         for (int j = 0; j < N + 1; ++j) {
-            double y1 = y_step * (i - 0.5);
-            double y2 = y_step * (i + 0.5);
-            double x = x_step * (j - 0.5);
+            double y1 = h2 * (i - 0.5);
+            double y2 = h2 * (i + 0.5);
+            double x = h1 * (j - 0.5);
             _a[i][j] = calculate_a(y1, y2, x);
 
-            double x1 = x_step * (j - 0.5);
-            double x2 = x_step * (j + 0.5);
-            double y = y_step * (i - 0.5);
+            double x1 = h1 * (j - 0.5);
+            double x2 = h1 * (j + 0.5);
+            double y = h2 * (i - 0.5);
             _b[i][j] = calculate_b(y, x1, x2);
         }
     }
@@ -84,11 +84,11 @@ void Handler::init() {
     #pragma omp parallel for
     for (int i = 0; i < M + 1; ++i) {
         for (int j = 0; j < N + 1; ++j) {
-            double x1 = x_step * (j - 0.5);
-            double x2 = x_step * (j + 0.5);
-            double y1 = y_step * (i - 0.5);
-            double y2 = y_step * (i + 0.5);
-            _B[i][j] = calculate_intersection_area(x1, x2, y1, y2) / x_step / y_step;
+            double x1 = h1 * (j - 0.5);
+            double x2 = h1 * (j + 0.5);
+            double y1 = h2 * (i - 0.5);
+            double y2 = h2 * (i + 0.5);
+            _B[i][j] = calculate_intersection_area(x1, x2, y1, y2) / h1 / h2;
         }
     }
 }
@@ -104,12 +104,12 @@ const std::vector<std::vector<double>> Handler::getAw(const std::vector<std::vec
                 double b_ij = _b[i][j];
                 double a_i1j = _a[i + 1][j];
                 double b_ij1 = _b[i][j + 1];
-                Aw[i][j] = -1. / y_step *
-                    (a_i1j / y_step * (w[i + 1][j] - w[i][j]) -
-                        a_ij / y_step * (w[i][j] - w[i - 1][j])) +
-                    - 1. / x_step *
-                    (b_ij1 / x_step * (w[i][j + 1] - w[i][j]) -
-                        b_ij / x_step * (w[i][j] - w[i][j - 1]));
+                Aw[i][j] = -1. / h2 *
+                    (a_i1j / h2 * (w[i + 1][j] - w[i][j]) -
+                        a_ij / h2 * (w[i][j] - w[i - 1][j])) +
+                    - 1. / h1 *
+                    (b_ij1 / h1 * (w[i][j + 1] - w[i][j]) -
+                        b_ij / h1 * (w[i][j] - w[i][j - 1]));
             }
         }
     }
