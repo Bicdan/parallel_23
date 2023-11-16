@@ -41,18 +41,18 @@ double Handler::calculate_intersection_area(double x1, double x2, double y1, dou
     } else if (3*y2 + 4*x2 < 12) {
         return (x2 - x1) * (y2 - y1);
     } else {
-        double x = -3*y1 / 4 + 4;
+        double x = -3*y1 / 4 + 3;
         double y = -4*x1 / 3 + 4;
         if (y <= y2 && x <= x2) {
             return (y - y1) * (x - x1) / 2;
         } else if (y > y2 && x <= x2) {
-            double xx = -3*y2 / 4 + 4;
+            double xx = -3*y2 / 4 + 3;
             return (y - y1) * (x - x1) / 2 - (y - y2) * (xx - x1) / 2;
         } else if (y <= y2 && x > x2) {
             double yy = -4*x2 / 3 + 4;
             return (y - y1) * (x - x1) / 2 - (yy - y1) * (x - x2) / 2;
         } else if (y > y2 && x > x2) {
-            double xx = -3*y2 / 4 + 4;
+            double xx = -3*y2 / 4 + 3;
             double yy = -4*x2 / 3 + 4;
             return (y - y1) * (x - x1) / 2 - (y - y2) * (xx - x1) / 2 - (yy - y1) * (x - x2) / 2;
         }
