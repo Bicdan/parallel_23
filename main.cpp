@@ -4,7 +4,7 @@
 #include "/opt/homebrew/opt/libomp/include/omp.h"
 
 int main() {
-    int M = 20, N = 20;
+    int M = 10, N = 10;
     int num_threads = 20;
     std::cout.precision(3);
 

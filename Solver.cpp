@@ -45,7 +45,7 @@ Printer Solver::execute(Handler& handler, int M, int N, double delta) {
                 w[i][j] -= tau * r[i][j];
             }
         }
-        handler.border_conditions(w);
+        handler.zeroing_borders(w);
 
         double r_norm_max = 0.;
         #pragma omp parallel for private(i) private(j) reduction(max: r_norm_max)
